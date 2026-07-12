@@ -10,4 +10,15 @@ public class HelloController {
     private String getHello(){
         return "Hello";
     }
+
+    @GetMapping("/user/hello")
+    private String sayAdminHello(){
+        return "Hello User";
+    }
+
+    @GetMapping("/admin/hello")
+    private String sayUserHello(){
+        return "Hello Admin";
+    }
+
 }

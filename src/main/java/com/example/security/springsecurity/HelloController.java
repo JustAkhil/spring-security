@@ -1,23 +1,25 @@
 package com.example.security.springsecurity;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class HelloController {
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/hello")
-    private String getHello(){
+    public String getHello(){
         return "Hello";
     }
 
     @GetMapping("/user/hello")
-    private String sayAdminHello(){
+    public String sayAdminHello(){
         return "Hello User";
     }
 
     @GetMapping("/admin/hello")
-    private String sayUserHello(){
+    public String sayUserHello(){
         return "Hello Admin";
     }
 

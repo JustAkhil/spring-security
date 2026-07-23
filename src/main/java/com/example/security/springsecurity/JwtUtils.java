@@ -1,35 +1,60 @@
 package com.example.security.springsecurity;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.security.Key;
-import java.util.Base64;
 import java.util.Date;
 
+@Component
 public class JwtUtils {
-    private String jwtSecret = "a-string-secret-at-least-256-bits-long";
-    private int jwtExpirationMs=172800000;
+    private String jwtSecret = "YS1zdHJpbmctc2VjcmV0LWF0LWxlYXN0LTI1Ni1iaXRzLWxvbmc=";
+    private int jwtExpirationMs = 172800000;
 
-    public String generateJwtFromHeader(){
-        return "";
+    public String generateJwtFromHeader(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
     }
-    public String generateTokenFromUserName(String userName){
+
+    public String generateTokenFromUserName(UserDetails userDetails) {
+        String userName=userDetails.getUsername();
         return Jwts.builder()
                 .subject(userName)
+                .claim("roles",userDetails.getAuthorities().stream()
+                        .map(m->m.getAuthority()).toList())
                 .issuedAt(new Date())
-                .expiration(new Date(new Date().getTime()+jwtExpirationMs))
+                .expiration(new Date(new Date().getTime() + jwtExpirationMs))
                 .signWith(key())
                 .compact();
     }
 
-    private Key key(){
+    private Key key() {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
     }
 
-    public boolean validateJwtToken(){
+    public boolean validateJwtToken(String jwtToken) {
+        try {
+            Jwts.parser().verifyWith((SecretKey) key()).build().parseSignedClaims(jwtToken);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return true;
+    }
+
+    public String getUsernameFromToken(String jwt) {
+        return Jwts.parser().verifyWith((SecretKey) key()).build().parseSignedClaims(jwt).getPayload().getSubject();
+    }
+
+    public Claims getAllClaims(String jwt) {
+        return Jwts.parser().verifyWith((SecretKey) key()).build().parseSignedClaims(jwt).getPayload();
     }
 }
